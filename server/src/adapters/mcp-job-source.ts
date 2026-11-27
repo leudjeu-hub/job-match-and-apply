@@ -193,7 +193,7 @@ export class McpJobSourceAdapter implements JobSourcePort {
   }
 
   async searchDetailed(profile: SearchProfile): Promise<{ jobs: JobPosting[]; failures: SourceSearchFailure[] }> {
-    const searchableIds = profile.sourceIds.filter((id) => id !== 'linkedin-profile');
+    const searchableIds = mcpSearchableSourceIds(profile.sourceIds);
     if (!searchableIds.length) return { jobs: [], failures: [] };
     const ort = profile.regions[0] ?? null;
 
@@ -258,4 +258,17 @@ export class McpJobSourceAdapter implements JobSourcePort {
     const result = await this.call('portal_sitzung_loeschen', { portal_id: portalId }) as Record<string, unknown>;
     return { status: String(result.status ?? 'ok'), portalId };
   }
+}
+
+/**
+ * Ältere Suchprofile (Standardkonfiguration, Demo-Modus) verwenden die Demo-ID
+ * `bundesagentur-arbeit`; der Job-Search-MCP kennt die Quelle als `arbeitsagentur`
+ * und lehnt die alte ID als ungültig ab. `linkedin-profile` ist keine durchsuchbare Quelle.
+ */
+const MCP_SOURCE_ALIASES: Record<string, string> = { 'bundesagentur-arbeit': 'arbeitsagentur' };
+
+export function mcpSearchableSourceIds(sourceIds: readonly string[]): string[] {
+  return [...new Set(sourceIds
+    .filter((id) => id !== 'linkedin-profile')
+    .map((id) => MCP_SOURCE_ALIASES[id] ?? id))];
 }
