@@ -2804,10 +2804,10 @@ describe('App', () => {
     const component = fixture.componentInstance;
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelectorAll('h1')).toHaveLength(1);
-    expect(element.querySelector('.next h2')?.textContent).toContain('Lebenslauf importieren');
-    expect(element.querySelectorAll('.next .btn-primary')).toHaveLength(1);
+    expect(element.querySelector('[data-testid="overview-next"] h2')?.textContent).toContain('Lebenslauf importieren');
+    expect(element.querySelectorAll('[data-testid="overview-next-cta"]')).toHaveLength(1);
     const select = vi.spyOn(component, 'select');
-    (element.querySelector('.next .btn-primary') as HTMLButtonElement).click();
+    (element.querySelector('[data-testid="overview-next-cta"]') as HTMLButtonElement).click();
     expect(select).toHaveBeenCalledWith('cv');
     fixture.destroy();
   });
