@@ -776,6 +776,22 @@ export class AgentCenterStore {
     return this.agentWorkflows.find((item) => item.id === this.agentOrchestrationForm.workflowId);
   }
 
+  /**
+   * Einwilligung pro Übermittlung (DSGVO): Für Provider außerhalb dieses Geräts muss jeder einzelne Start
+   * ausdrücklich bestätigt werden. Die Bestätigung wird nach jedem Start zurückgesetzt.
+   */
+  agentDataTransferConsent = false;
+  orchestrationDataTransferConsent = false;
+  providerRunsLocally(providerId: string | undefined): boolean {
+    return !!providerId && /^(fake|synthetic)/.test(providerId);
+  }
+  consentProviderLabel(providerId: string | undefined): string {
+    return providerId ? this.agentProviderName(providerId) : 'den gewählten KI-Provider';
+  }
+  dataTransferConsentMissing(providerId: string | undefined, consent: boolean): boolean {
+    return !this.providerRunsLocally(providerId) && !consent;
+  }
+
   createAgentOrchestration(): void {
     const form = this.agentOrchestrationForm;
     const workflow = this.agentOrchestrationWorkflow();
@@ -786,6 +802,7 @@ export class AgentCenterStore {
     const profileBlock = this.agentProfileInstallationBlockedReason(form.providerId, installation);
     if (profileBlock) { this.agentOrchestrationError = profileBlock; return; }
     if (prompt.length < 3) { this.agentOrchestrationError = 'Bitte einen konkreten Orchestrierungsauftrag eingeben.'; return; }
+    if (this.dataTransferConsentMissing(form.providerId, this.orchestrationDataTransferConsent)) { this.agentOrchestrationError = `Bitte bestätige, dass Auftrag und Kontext an ${this.agentProviderName(form.providerId)} übermittelt werden.`; return; }
     if (workflow.requiredScope !== 'search_profile' && !form.applicationCaseId) { this.agentOrchestrationError = 'Dieser Workflow benötigt einen expliziten Bewerbungsfall.'; return; }
     if (workflow.id === 'employer-response-triage' && !form.mailId) {
       this.agentOrchestrationError = 'Employer-Triage benötigt eine explizit gewählte Inbox-Mail. Öffne sie über die CRM-Aktion; Mailinhalt wird nicht in das Browserformular kopiert.';
@@ -804,6 +821,7 @@ export class AgentCenterStore {
     this.api.createAgentOrchestration(request).subscribe({
       next: (created) => {
         this.agentOrchestrationBusy = false;
+        this.orchestrationDataTransferConsent = false;
         this.agentOrchestrations = [created, ...this.agentOrchestrations.filter((item) => item.id !== created.id)];
         this.selectAgentOrchestration(created, false);
         if (this.host.section === 'cv' && created.workflowId === 'evidence-application-package'
@@ -1148,6 +1166,7 @@ export class AgentCenterStore {
     const profileBlock = this.agentProfileInstallationBlockedReason(this.agentRunForm.providerId, installation);
     if (profileBlock) { this.host.error = profileBlock; return; }
     if (prompt.length < 3) { this.host.error = 'Bitte eine konkrete Aufgabe mit mindestens drei Zeichen beschreiben.'; return; }
+    if (this.dataTransferConsentMissing(this.agentRunForm.providerId, this.agentDataTransferConsent)) { this.host.error = `Bitte bestätige, dass Auftrag und Kontext an ${provider.name} übermittelt werden.`; return; }
     const request = this.buildAgentRunRequest();
     if (!request || !this.agentPreflightMatchesCurrentDraft()) {
       this.host.error = 'Die serverseitige Startprüfung fehlt oder ist für diesen Entwurf veraltet.';
@@ -1163,6 +1182,7 @@ export class AgentCenterStore {
         this.agentBusy = false;
         this.agentRuns = [run, ...this.agentRuns.filter((item) => item.id !== run.id)];
         this.agentRunForm.prompt = '';
+        this.agentDataTransferConsent = false;
         this.agentRunForm.parentRunId = undefined;
         this.agentRunForm.network = false;
         this.scheduleAgentPreflight();
