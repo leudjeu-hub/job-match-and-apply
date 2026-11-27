@@ -149,6 +149,21 @@ export class App implements OnInit, OnDestroy {
 
   toggleMobileMenu(open = !this.mobileMenuOpen): void { this.mobileMenuOpen = open; }
 
+  /** Sprungmarken für die lange Profilseite. */
+  readonly profileJumps = [
+    { id: 'profile-identities', label: 'Identitäten' },
+    { id: 'profile-cv', label: 'Erkannter Lebenslauf' },
+    { id: 'profile-setup', label: 'Kandidatenprofil' },
+    { id: 'profile-style', label: 'Schreibstil' },
+    { id: 'profile-claims', label: 'Belegte Claims' },
+  ];
+  jumpTo(id: string): void {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    target.focus({ preventScroll: true });
+  }
+
   ngOnInit(): void {
     this.agents.configureAgentMotionPreference();
     this.bindSectionToRouter();

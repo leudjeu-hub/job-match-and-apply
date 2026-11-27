@@ -97,3 +97,11 @@
 @media (max-width: 760px) {
   .jobs-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 }
+
+/* Sprungmarken für lange Seiten (Agent Center, Profil). */
+.page-jumps { position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; overflow-x: auto; margin: 0 0 18px; padding: 8px 0; background: color-mix(in srgb, #f3f5f9 92%, transparent); backdrop-filter: blur(6px); scrollbar-width: thin; }
+.page-jumps button { flex: 0 0 auto; min-height: 36px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: 999px; background: #fff; color: var(--color-text); font: inherit; font-size: var(--fs-2); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.page-jumps button:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.page-jumps button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+[id^="agent-"][tabindex="-1"]:focus, [id^="profile-"][tabindex="-1"]:focus { outline: none; }
+[id^="agent-"][tabindex="-1"], [id^="profile-"][tabindex="-1"] { scroll-margin-top: 64px; }

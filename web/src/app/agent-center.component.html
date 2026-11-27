@@ -3,8 +3,11 @@
     <div><span class="kicker">LOKALE AGENTENSTEUERUNG</span><h2>Eine sichere Oberfläche für alle Agenten</h2><p>Starte Codex, OpenCode, Claude und weitere Provider über einen einheitlichen Vertrag. Jeder Lauf ist einer klaren Aufgabe zugeordnet; Schreibzugriff, Netzwerk und sensible Aktionen bleiben sichtbar und bewusst steuerbar.</p></div>
     <div class="agent-intro-actions"><button class="secondary" type="button" (click)="agents.loadAgentProviders(true)" [disabled]="agents.agentBusy">Installationen prüfen</button><button class="secondary" type="button" (click)="agents.refreshAgentRuns()" [disabled]="agents.agentBusy">↻ Runs aktualisieren</button></div>
   </section>
+  <nav class="page-jumps" aria-label="Auf dieser Seite">
+    @for (jump of jumps; track jump.id) { <button type="button" (click)="jumpTo(jump.id)">{{ jump.label }}</button> }
+  </nav>
 
-  <section class="panel agent-config-profile" data-testid="agent-config-profile" aria-labelledby="agent-config-profile-heading">
+  <section id="agent-config" tabindex="-1" class="panel agent-config-profile" data-testid="agent-config-profile" aria-labelledby="agent-config-profile-heading">
     <div class="panel-head"><div><span class="kicker">LOKALES SICHERHEITSPROFIL</span><h3 id="agent-config-profile-heading">Provider, Limits und Feature-Gates</h3><p>Der Browser bearbeitet nur den geschlossenen Serververtrag. Secrets, Commands und lokale Pfade sind weder sichtbar noch eingabefähig.</p></div><button class="secondary compact" type="button" (click)="agents.loadAgentConfigProfile()" [disabled]="agents.agentConfigProfileBusy">Profil neu laden</button></div>
     @if (agents.agentConfigProfile; as view) {
       @if (agents.agentConfigProfileDraft; as profile) {
@@ -73,7 +76,7 @@
     @if (agents.agentConfigProfileError) { <p class="approval-block-reason" role="alert">{{ agents.agentConfigProfileError }}</p> }
   </section>
 
-  <section class="panel agent-provider-setup" data-testid="agent-provider-setup" aria-labelledby="agent-provider-setup-heading">
+  <section id="agent-setup" tabindex="-1" class="panel agent-provider-setup" data-testid="agent-provider-setup" aria-labelledby="agent-provider-setup-heading">
     <div class="panel-head"><div><span class="kicker">PROVIDER-EINRICHTUNG</span><h3 id="agent-provider-setup-heading">Versionen freigeben und API-Keys hinterlegen</h3><p>Erkannte Laufzeiten werden pro exakter Installation freigegeben. API-Keys werden verschlüsselt gespeichert und nie angezeigt.</p></div><button class="secondary compact" type="button" (click)="agents.loadAgentProviderSetup()" [disabled]="agents.agentProviderSetupBusy">Neu laden</button></div>
     <fieldset class="agent-setup-versions"><legend>Freigegebene Provider-Versionen</legend>
       @if (agents.agentProviderSetupRows().length) {
@@ -139,7 +142,7 @@
     <article><span class="stat-icon green">◇</span><div><small>Sicherheitsstandard</small><strong class="stat-text">Read-only</strong><p>Netzwerk aus</p></div></article>
   </section>
 
-  <section class="agent-operations-grid" aria-label="Queue und Recovery">
+  <section id="agent-ops" tabindex="-1" class="agent-operations-grid" aria-label="Queue und Recovery">
     <article class="panel agent-queue-diagnostics" data-testid="agent-queue-diagnostics" aria-labelledby="agent-queue-diagnostics-heading">
       <div class="panel-head"><div><span class="kicker">QUEUE-DIAGNOSE</span><h3 id="agent-queue-diagnostics-heading">Kapazität, Fairness und Blockaden</h3></div>@if (agents.agentQueue; as queue) { <span class="status">{{ queue.depth }} wartend · {{ queue.active }} aktiv</span> }</div>
       <p class="description">Die Anzeige ist eine schreibgeschützte Momentaufnahme. Effektive Priorität enthält den serverseitigen Aging-Bonus; Limits werden nicht im Browser verändert.</p>
@@ -211,7 +214,7 @@
     </div>
   }
 
-  <section class="panel global-approval-inbox" aria-labelledby="global-approval-heading">
+  <section id="agent-approvals" tabindex="-1" class="panel global-approval-inbox" aria-labelledby="global-approval-heading">
     <div class="panel-head"><div><span class="kicker">GLOBALE FREIGABE-INBOX</span><h3 id="global-approval-heading">Offene Entscheidungen aller Runs</h3></div><span class="status approval-count">{{ agents.pendingAgentApprovalsCount() }} ausführbar · {{ agents.globalAgentApprovals().length }} angezeigt</span></div>
     <p class="description">Jede Entscheidung bleibt an Run, Revision, Risiko und Ziel gebunden. Abgelaufene, fortgeschrittene oder unvollständige Anfragen werden sichtbar, aber nicht ausführbar.</p>
     @for (item of agents.globalAgentApprovals(); track item.run.id + ':' + item.approval.id) {
@@ -239,7 +242,7 @@
     }
   </section>
 
-  <section class="agent-provider-grid" aria-label="Agenten-Provider">
+  <section id="agent-providers" tabindex="-1" class="agent-provider-grid" aria-label="Agenten-Provider">
     @for (provider of agents.agentProviders; track provider.id) {
       <article class="panel source-card agent-provider" [class.unavailable]="!provider.available">
         <div class="source-card-head"><span class="source-logo big">{{ provider.name.slice(0, 2) }}</span><span class="status" [class.ok]="provider.available">{{ agents.agentProviderStatusLabel(provider) }}</span></div>
@@ -254,7 +257,7 @@
     } @empty { <div class="warning-box"><strong>Keine Provider erkannt</strong><p>Installiere mindestens eine unterstützte CLI und aktualisiere den Status. Das Center akzeptiert keine frei eingegebenen Executables.</p></div> }
   </section>
 
-  <section class="panel orchestration-center" data-testid="agent-orchestration-center" aria-labelledby="orchestration-center-heading">
+  <section id="agent-orchestration" tabindex="-1" class="panel orchestration-center" data-testid="agent-orchestration-center" aria-labelledby="orchestration-center-heading">
     <div class="panel-head"><div><span class="kicker">MULTI-AGENT-WORKFLOWS</span><h3 id="orchestration-center-heading">Getrennte Rollen produktiv orchestrieren</h3><p>Der Server besitzt Scope, Abhängigkeiten, Budgets und Gates. Jeder Node läuft in einem eigenen Rollenkontext; alle Artefakte bleiben Vorschläge.</p></div><button class="secondary compact" type="button" (click)="agents.refreshAgentOrchestrations()" [disabled]="agents.agentOrchestrationBusy">Aktualisieren</button></div>
     <div class="orchestration-layout">
       <form class="orchestration-create" (ngSubmit)="agents.createAgentOrchestration()" aria-label="Multi-Agent-Workflow starten">
@@ -352,7 +355,7 @@
     @if (agents.agentOrchestrationError) { <p class="approval-block-reason orchestration-error" role="alert">{{ agents.agentOrchestrationError }}</p> }
   </section>
 
-  <section class="agent-workspace">
+  <section id="agent-workspace" tabindex="-1" class="agent-workspace">
     <div class="agent-left-column">
       <article class="panel agent-create">
         <span class="kicker">GEFÜHRTER START</span><h3>Neuen Agentenlauf planen</h3>

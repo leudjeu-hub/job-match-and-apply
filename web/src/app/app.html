@@ -231,7 +231,10 @@
 
       @if (section === 'identity') {
         <section class="page-intro"><div><span class="kicker">DATENSCHUTZ ZUERST</span><h2>Ein Profil, zwei Identitäten</h2><p>Pflege Suchpräferenzen und ersetze persönliche Daten beim Testen automatisch durch eindeutige Platzhalter.</p></div><button class="primary" (click)="createIncognito()" [disabled]="busy">+ Scheinidentität anlegen</button></section>
-        <section class="page-grid identity-layout">
+        <nav class="page-jumps" aria-label="Auf dieser Seite">
+          @for (jump of profileJumps; track jump.id) { <button type="button" (click)="jumpTo(jump.id)">{{ jump.label }}</button> }
+        </nav>
+        <section id="profile-identities" tabindex="-1" class="page-grid identity-layout">
           <article class="panel identities"><h3>Identitäten</h3>
             @for (identity of config.identities; track identity.id) {
               <button class="identity-card" [class.active]="config.activeIdentityId === identity.id" (click)="config.activeIdentityId = identity.id">
@@ -249,7 +252,7 @@
             </article>
           }
         </section>
-        <section class="panel" data-testid="profile-recognized-cv" aria-labelledby="profile-recognized-cv-heading">
+        <section id="profile-cv" tabindex="-1" class="panel" data-testid="profile-recognized-cv" aria-labelledby="profile-recognized-cv-heading">
           <div class="panel-head"><div><span class="kicker">ERKANNTER LEBENSLAUF</span><h3 id="profile-recognized-cv-heading">Mein erkannter Lebenslauf</h3><p>Die erkannten Angaben bleiben einzeln lesbar und korrigierbar. Jede Korrektur ist eine neue, noch zu prüfende Aussage — nichts wird automatisch bestätigt oder übernommen.</p></div><button class="secondary compact" type="button" (click)="cv.loadProfileCvOverview()" [disabled]="busy">Neu laden</button></div>
           @if (!cv.cvImport) {
             <div class="approval-empty"><strong>Noch kein Lebenslauf erkannt</strong><p>Lade im Lebenslauf-Studio eine Datei hoch. Nach der Erkennung erscheint die Übersicht hier automatisch.</p><button class="primary" type="button" (click)="select('cv'); cv.selectCvStep(1)">Zum Upload im Lebenslauf-Studio</button></div>
@@ -272,7 +275,7 @@
               (resetDraft)="cv.resetCvFactDraft($event)" />
           }
         </section>
-        <section class="panel profile-setup" data-testid="application-profile-setup" aria-labelledby="profile-setup-heading">
+        <section id="profile-setup" tabindex="-1" class="panel profile-setup" data-testid="application-profile-setup" aria-labelledby="profile-setup-heading">
           <div class="panel-head"><div><span class="kicker">LOKALES ONBOARDING</span><h3 id="profile-setup-heading">Kandidaten- und Stilprofil vorbereiten</h3></div><button class="secondary compact" type="button" (click)="loadProfileSetup()">Status aktualisieren</button></div>
           @if (profileSetup; as setup) {
             <div class="setup-status-grid"><div><small>Kandidatenprofil</small><strong>{{ setup.candidateProfile === 'present' ? 'Vorhanden' : 'Fehlt' }}</strong></div><div><small>Stilprofil</small><strong>{{ setup.styleProfile === 'present' ? 'Vorhanden' : 'Fehlt' }}</strong></div><div><small>Freigegebene Fakten</small><strong>{{ setup.containsCandidateFacts ? 'Belegt' : 'Noch nicht belegt' }}</strong></div></div>
@@ -290,7 +293,7 @@
         </section>
         @if (cv.applicationStyleProfile; as styleView) {
           @if (styleProfileDraft; as style) {
-            <section class="panel style-profile-editor" data-testid="style-profile-editor" aria-labelledby="style-profile-heading">
+            <section id="profile-style" tabindex="-1" class="panel style-profile-editor" data-testid="style-profile-editor" aria-labelledby="style-profile-heading">
               <div class="panel-head">
                 <div><span class="kicker">VERSIONIERTES STILPROFIL</span><h3 id="style-profile-heading">Schreibstil sicher konfigurieren</h3><p>Geschlossene Felder statt freier YAML- oder Pfadeingaben. Beispiele steuern den Stil, sind aber niemals Kandidatenbelege.</p></div>
                 <button class="secondary compact" type="button" (click)="loadApplicationStyleProfile()" [disabled]="styleProfileBusy">Revision neu laden</button>
@@ -391,7 +394,7 @@
             <p class="field-help">Fehlt in <code>document_styles</code> bei einem der vier Dokumenttypen (<code>cv</code>, <code>cover_letter</code>, <code>email</code>, <code>linkedin</code>) ein Pflichtfeld wie <code>technical_density</code>, lehnt die Validierung das gesamte Profil ab.</p>
           </section>
         }
-        <section class="panel" style="margin-top: 18px">
+        <section id="profile-claims" tabindex="-1" class="panel" style="margin-top: 18px">
           <div class="panel-head"><div><span class="kicker">EVIDENCE-PROFIL</span><h3>Belegte Kandidatenclaims</h3></div><button class="secondary" (click)="loadCandidateProfile()">Profil prüfen</button></div>
           <p>Änderungen werden validiert und erst mit dem Speichern ausdrücklich bestätigt. Importierte Inhalte bleiben zunächst unbestätigte Vorschläge.</p>
           <label class="secondary" style="display:inline-block">Lebenslauf oder Profil-Export prüfen<input type="file" accept=".txt,.md,.json,.pdf,.docx" (change)="importFile($event)" hidden></label>
