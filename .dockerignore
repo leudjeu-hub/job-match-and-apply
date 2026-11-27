@@ -1,0 +1,19 @@
+# Plattform-spezifische Builds und lokale/private Daten gehören nicht ins Image.
+**/node_modules
+**/.angular
+**/dist
+**/.venv
+**/.venv-wsl
+**/__pycache__
+.git
+.local-data
+.application-work
+uebergabe
+.opencode
+.env
+.env.*
+!.env.example
+*.log
+**/.DS_Store
+web/playwright-report
+web/test-results
