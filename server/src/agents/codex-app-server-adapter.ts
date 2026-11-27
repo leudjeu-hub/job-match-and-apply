@@ -175,11 +175,16 @@ async function isolatedCodexHome(runId: string, sourceHomeOverride?: string): Pr
   const sourceHome = configuredHome && isAbsolute(configuredHome)
     ? resolve(configuredHome) : userHome && isAbsolute(userHome) ? resolve(userHome, '.codex') : undefined;
   let authPath: string | undefined;
+  // Nur wenn tatsächlich ein Login kopiert wurde, darf `dispose` ihn zurückspielen.
+  // Ohne ~/.codex/auth.json (z. B. in CI) würde der Abgleich sonst mit ENOENT
+  // scheitern und den eigentlichen Fehler des Runs überdecken.
+  let authCopied = false;
   if (sourceHome) {
     authPath = resolve(sourceHome, 'auth.json');
     try {
       const auth = await safeCodexAuth(authPath);
       await writeFile(resolve(path, 'auth.json'), auth, { flag: 'wx', mode: 0o600 });
+      authCopied = true;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         await rm(path, { recursive: true, force: true });
@@ -192,7 +197,7 @@ async function isolatedCodexHome(runId: string, sourceHomeOverride?: string): Pr
     async dispose() {
       if (!path.startsWith(`${base}\\`) && !path.startsWith(`${base}/`)) throw new Error('codex_isolated_home_escape');
       try {
-        if (authPath) await syncRefreshedCodexAuth(authPath, resolve(path, 'auth.json'));
+        if (authPath && authCopied) await syncRefreshedCodexAuth(authPath, resolve(path, 'auth.json'));
       } finally {
         await rm(path, { recursive: true, force: true });
       }
