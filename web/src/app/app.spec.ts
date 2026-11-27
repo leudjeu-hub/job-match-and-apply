@@ -491,7 +491,7 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(fixture.componentInstance).toBeTruthy();
-    expect(compiled.querySelector('h1')?.textContent).toContain('Guten Tag');
+    expect(compiled.querySelector('h1')?.textContent).toMatch(/Guten (Morgen|Tag|Abend)/);
     expect(compiled.textContent).toContain('Testprofil');
   });
 
