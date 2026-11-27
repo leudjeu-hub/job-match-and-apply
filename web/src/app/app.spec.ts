@@ -690,6 +690,7 @@ describe('App', () => {
     expect(fixture.componentInstance.agents.agentRunForm.network).toBe(false);
     fixture.componentInstance.agents.setAgentPrompt('Analysiere den lokalen Teststand');
     fixture.componentInstance.agents.refreshAgentPreflight();
+    fixture.componentInstance.agents.agentDataTransferConsent = true;
     fixture.componentInstance.agents.createAgentRun();
     expect(apiMock['createAgentRun']).toHaveBeenCalledWith({
       providerId: 'codex', prompt: 'Analysiere den lokalen Teststand', runtimeTarget: 'windows',
@@ -722,6 +723,7 @@ describe('App', () => {
     expect(element.querySelector('.agent-preflight')?.textContent).toContain('WSL · Ubuntu-24.04');
     expect(element.querySelector('.agent-preflight')?.textContent).toContain('Serverseitiger Projektbereich · Nur lesen');
     expect(element.querySelector('.agent-preflight')?.textContent).toContain('30 Min · 10 MiB angefordert');
+    component.agents.agentDataTransferConsent = true;
     component.agents.createAgentRun();
     expect(apiMock['createAgentRun']).toHaveBeenLastCalledWith({
       providerId: 'codex', prompt: 'Analysiere den lokalen Teststand', runtimeTarget: 'wsl', wslDistribution: 'Ubuntu-24.04',
@@ -744,6 +746,7 @@ describe('App', () => {
     const start = (fixture.nativeElement as HTMLElement).querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(start.disabled).toBe(true);
     expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Blocker der Startprüfung"]')?.textContent).toContain('Emergency Stop');
+    component.agents.agentDataTransferConsent = true;
     component.agents.createAgentRun();
     expect(apiMock['createAgentRun']).not.toHaveBeenCalled();
     expect(component.error).toContain('Emergency Stop');
@@ -1179,6 +1182,7 @@ describe('App', () => {
     component.openInboxMailAgentOrchestration(message);
     expect(component.agents.agentOrchestrationForm.mailId).toBe(message.id);
     expect(component.agents.agentOrchestrationForm.prompt).not.toContain(message.text);
+    component.agents.orchestrationDataTransferConsent = true;
     component.agents.createAgentOrchestration();
     const request = apiMock['createAgentOrchestration'].mock.calls[0][0] as Record<string, unknown>;
     expect(request).toMatchObject({
@@ -1203,6 +1207,7 @@ describe('App', () => {
       workflowId: workflow.id, providerId: 'codex', prompt: 'Antwort als Vorschlag einordnen', runtimeTarget: 'windows',
       applicationCaseId: applicationCaseFixture.id, userInputConfirmed: false
     };
+    component.agents.orchestrationDataTransferConsent = true;
     component.agents.createAgentOrchestration();
     expect(apiMock['createAgentOrchestration']).not.toHaveBeenCalled();
     expect(component.agents.agentOrchestrationError).toContain('explizit gewählte Inbox-Mail');
@@ -1263,6 +1268,7 @@ describe('App', () => {
     component.agents.setAgentOrchestrationWorkflow('evidence-application-package');
     component.agents.setAgentOrchestrationApplicationCase(applicationCaseFixture.id);
     component.agents.agentOrchestrationForm.prompt = 'Getrennte Evidence- und Finalizer-Rollen ausführen';
+    component.agents.orchestrationDataTransferConsent = true;
     component.agents.createAgentOrchestration();
     expect(apiMock['createAgentOrchestration']).toHaveBeenCalledWith({
       workflowId: 'evidence-application-package', providerId: 'codex', prompt: 'Getrennte Evidence- und Finalizer-Rollen ausführen',
@@ -2020,6 +2026,7 @@ describe('App', () => {
     expect(apiMock['saveCvTheme']).toHaveBeenCalledWith(adopted, expect.objectContaining({ template: 'classic', font: 'Arial' }));
     component.applicationCases = [structuredClone(cvCase)]; component.cv.cvSelectedApplicationCaseId = cvCase.id;
     expect(component.cv.cvHtmlRenderUnavailableReason()).toContain('zuerst geprüft');
+    component.agents.orchestrationDataTransferConsent = true;
     component.cv.startCvAgentOrchestration();
     expect(apiMock['createAgentOrchestration']).toHaveBeenCalledWith(expect.objectContaining({
       workflowId: 'evidence-application-package', providerId: 'codex', runtimeTarget: 'windows', applicationCaseId: cvCase.id
@@ -2096,6 +2103,7 @@ describe('App', () => {
     component.applicationCases = [boundCase];
     component.selectedApplicationCaseId = boundCase.id;
     component.agents.agentOrchestrationForm = { ...component.agents.agentOrchestrationForm, providerId: 'codex', runtimeTarget: 'windows' };
+    component.agents.orchestrationDataTransferConsent = true;
     component.startApplicationAgentOrchestration();
     const request = apiMock['createAgentOrchestration'].mock.calls[0]?.[0];
     expect(request).toEqual(expect.objectContaining({
@@ -2255,6 +2263,7 @@ describe('App', () => {
     component.agents.selectAgentOrchestrationInstallation(component.agents.agentInstallationKey(installations[1]));
 
     // Saved profile (opencode=wsl) blocks the linux selection before the start.
+    component.agents.orchestrationDataTransferConsent = true;
     component.agents.createAgentOrchestration();
     expect(apiMock['createAgentOrchestration']).not.toHaveBeenCalled();
     expect(component.agents.agentOrchestrationError).toContain('erlaubt fuer opencode nur wsl');
@@ -2269,6 +2278,7 @@ describe('App', () => {
     expect(savedProfile).toEqual(expected);
 
     fixture.detectChanges(); await fixture.whenStable();
+    component.agents.orchestrationDataTransferConsent = true;
     component.agents.createAgentOrchestration();
     expect(apiMock['createAgentOrchestration']).toHaveBeenCalledWith(expect.objectContaining({
       providerId: 'opencode',
@@ -2292,6 +2302,7 @@ describe('App', () => {
       id: 'codex', name: 'Codex CLI', available: true,
       installations: [{ runtimeTarget: 'windows', version: '1.0', support: 'supported', executable: 'C:\\tools\\codex.exe' }]
     }];
+    component.agents.orchestrationDataTransferConsent = true;
     component.agents.createAgentOrchestration();
     expect(apiMock['createAgentOrchestration']).not.toHaveBeenCalled();
     expect(component.agents.agentOrchestrationError).toContain('Sicherheitsprofil');
@@ -2394,6 +2405,7 @@ describe('App', () => {
       runtimeTarget: 'windows', applicationCaseId: boundCase.id, userInputConfirmed: false
     };
     component.agents.selectAgentOrchestrationProvider('codex');
+    component.agents.orchestrationDataTransferConsent = true;
     component.agents.createAgentOrchestration();
     expect(apiMock['createAgentOrchestration']).toHaveBeenCalledWith(expect.objectContaining({
       applicationCaseId: boundCase.id, prompt: 'Gebundenes Anschreiben erzeugen'

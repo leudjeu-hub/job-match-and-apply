@@ -5,6 +5,8 @@ import { expect, test } from './support/agent-api.fixture';
 async function openAgentCenter(page: Page): Promise<void> {
   await page.goto('/');
   const navigation = page.locator('nav[aria-label="Hauptnavigation"] button').filter({ hasText: 'Agent Center' });
+  // Mobil liegt die Hauptnavigation hinter „Mehr“.
+  if (!(await navigation.isVisible())) await page.locator('nav.bottom-bar').getByRole('button', { name: 'Mehr', exact: true }).click();
   await expect(navigation).toBeVisible();
   await navigation.click();
   await expect(page.getByRole('heading', { name: 'Eine sichere Oberfläche für alle Agenten', exact: true })).toBeVisible();
@@ -14,6 +16,8 @@ async function openAgentCenter(page: Page): Promise<void> {
 async function openSources(page: Page): Promise<void> {
   await page.goto('/');
   const navigation = page.locator('nav[aria-label="Hauptnavigation"] button').filter({ hasText: 'Quellen & MCP' });
+  // Mobil liegt die Hauptnavigation hinter „Mehr“.
+  if (!(await navigation.isVisible())) await page.locator('nav.bottom-bar').getByRole('button', { name: 'Mehr', exact: true }).click();
   await expect(navigation).toBeVisible();
   await navigation.click();
   await expect(page.getByRole('heading', { name: 'Quellen & MCP verwalten', exact: true })).toBeVisible();
@@ -150,16 +154,17 @@ test.describe('Agent Center – offline browser contract', () => {
   });
 
   test('blocks a disabled provider until the confirmed profile save refreshes provider discovery and preflight', async ({ page, agentApi }) => {
-    agentApi.seedAgentProviderDisabled();
+    agentApi.seedAgentProviderDisabled('codex-exec');
     await openAgentCenter(page);
     await page.locator('textarea[name="agentPrompt"]').fill('Profilgebundenen Providerstart sicher prüfen');
     const start = page.getByRole('button', { name: 'Run kontrolliert starten', exact: true });
+    { const consent = page.locator('input[name="agentDataTransferConsent"]'); if (await consent.count()) await consent.check(); }
     const preflight = page.getByTestId('agent-preflight');
     await expect(preflight).toContainText('im aktiven lokalen Sicherheitsprofil deaktiviert');
     await expect(start).toBeDisabled();
 
     const profile = page.getByTestId('agent-config-profile');
-    const provider = profile.locator('[data-provider-config="fake-interactive"]');
+    const provider = profile.locator('[data-provider-config="codex-exec"]');
     await provider.locator('input[type="checkbox"]').first().check();
     await profile.getByTestId('agent-config-save-confirmation').check();
     await profile.getByTestId('save-agent-config-profile').click();
@@ -179,6 +184,7 @@ test.describe('Agent Center – offline browser contract', () => {
     const center = page.getByTestId('agent-orchestration-center');
     await center.locator('select[name="orchestrationWorkflow"]').selectOption('guided-job-analysis');
     await center.locator('textarea[name="orchestrationPrompt"]').fill('Deaktivierte Multi-Agent-Kette fail-closed prüfen');
+    { const consent = page.locator('input[name="orchestrationDataTransferConsent"]'); if (await consent.count()) await consent.first().check(); }
     await center.getByRole('button', { name: 'Multi-Agent-Workflow starten', exact: true }).click();
     await expect.poll(() => agentApi.orchestrationCreateRequests.length).toBe(1);
     await expect(center.getByRole('alert')).toContainText('im aktiven lokalen Profil deaktiviert');
@@ -198,19 +204,20 @@ test.describe('Agent Center – offline browser contract', () => {
   });
 
   test('starts a profile-approved WSL run and renders live events', async ({ page, agentApi }) => {
-    agentApi.seedAgentProviderRuntime('fake-interactive', 'wsl', 'E2E-Ubuntu');
+    agentApi.seedAgentProviderRuntime('codex-exec', 'wsl', 'E2E-Ubuntu');
     await openAgentCenter(page);
 
-    await page.locator('select[name="agentRuntime"]').selectOption('wsl:E2E-Ubuntu');
+    await page.locator('select[name="agentRuntime"]').selectOption('wsl:E2E-Ubuntu:1.0.0:');
     await page.locator('textarea[name="agentPrompt"]').fill('Synthetischen Agentenlauf kontrolliert starten');
     const start = page.getByRole('button', { name: 'Run kontrolliert starten', exact: true });
+    { const consent = page.locator('input[name="agentDataTransferConsent"]'); if (await consent.count()) await consent.check(); }
     await expect(start).toBeEnabled();
     await expect.poll(() => agentApi.preflightRequests.length).toBe(1);
     await start.click();
 
     await expect.poll(() => agentApi.createRequests.length).toBe(1);
     expect(agentApi.createRequests[0]).toEqual({
-      providerId: 'fake-interactive', prompt: 'Synthetischen Agentenlauf kontrolliert starten',
+      providerId: 'codex-exec', prompt: 'Synthetischen Agentenlauf kontrolliert starten',
       runtimeTarget: 'wsl', wslDistribution: 'E2E-Ubuntu', workspaceMode: 'read_only', network: false,
       budget: { wallTimeMinutes: 30, maxOutputMiB: 10 }
     });
@@ -221,9 +228,9 @@ test.describe('Agent Center – offline browser contract', () => {
   });
 
   test('shows the complete server-owned guided preflight without starting tools or network access', async ({ page, agentApi }) => {
-    agentApi.seedAgentProviderRuntime('fake-interactive', 'wsl', 'E2E-Ubuntu');
+    agentApi.seedAgentProviderRuntime('codex-exec', 'wsl', 'E2E-Ubuntu');
     await openAgentCenter(page);
-    await page.locator('select[name="agentRuntime"]').selectOption('wsl:E2E-Ubuntu');
+    await page.locator('select[name="agentRuntime"]').selectOption('wsl:E2E-Ubuntu:1.0.0:');
     await page.locator('select[name="agentWorkflow"]').selectOption('guided-job-analysis');
     const prompt = 'Synthetische Stellen vor dem Start sicher analysieren';
     await page.locator('textarea[name="agentPrompt"]').fill(prompt);
@@ -259,7 +266,7 @@ test.describe('Agent Center – offline browser contract', () => {
 
     await expect.poll(() => agentApi.preflightRequests.length).toBe(1);
     expect(agentApi.preflightRequests[0]).toEqual({
-      providerId: 'fake-interactive', prompt,
+      providerId: 'codex-exec', prompt,
       runtimeTarget: 'wsl', wslDistribution: 'E2E-Ubuntu', workspaceMode: 'read_only', network: false,
       workflowId: 'guided-job-analysis', budget: { wallTimeMinutes: 30, maxOutputMiB: 10 }
     });
@@ -284,11 +291,13 @@ test.describe('Agent Center – offline browser contract', () => {
     await center.locator('select[name="orchestrationWorkflow"]').selectOption('evidence-application-package');
     await center.locator('select[name="orchestrationCase"]').selectOption(application.id);
     await center.locator('textarea[name="orchestrationPrompt"]').fill('Getrennte Evidence- und Finalizer-Rollen synthetisch ausführen');
+    { const consent = page.locator('input[name="orchestrationDataTransferConsent"]'); if (await consent.count()) await consent.first().check(); }
     await center.getByRole('button', { name: 'Multi-Agent-Workflow starten', exact: true }).click();
     await expect.poll(() => agentApi.orchestrationCreateRequests.length).toBe(1);
     expect(agentApi.orchestrationCreateRequests[0]).toEqual({
       workflowId: 'evidence-application-package', providerId: 'codex-exec',
-      prompt: 'Getrennte Evidence- und Finalizer-Rollen synthetisch ausführen', runtimeTarget: 'windows', applicationCaseId: application.id
+      prompt: 'Getrennte Evidence- und Finalizer-Rollen synthetisch ausführen', runtimeTarget: 'windows', applicationCaseId: application.id,
+      clarifications: true
     });
     await expect(center).toContainText('evidence_reviewer');
     await expect(center.locator('.orchestration-nodes > li')).toHaveCount(5);
@@ -304,6 +313,7 @@ test.describe('Agent Center – offline browser contract', () => {
 
     await center.locator('select[name="orchestrationWorkflow"]').selectOption('guided-job-analysis');
     await center.locator('textarea[name="orchestrationPrompt"]').fill('Synthetische parallele Stellenanalyse starten');
+    { const consent = page.locator('input[name="orchestrationDataTransferConsent"]'); if (await consent.count()) await consent.first().check(); }
     await center.getByRole('button', { name: 'Multi-Agent-Workflow starten', exact: true }).click();
     await expect.poll(() => agentApi.orchestrationCreateRequests.length).toBe(2);
     const activeDetail = center.locator('.orchestration-detail');
@@ -529,6 +539,7 @@ test.describe('Agent Center – offline browser contract', () => {
     await expect(page.getByText('Replay-Vorlage aus fixture-child', { exact: true })).toBeVisible();
     expect(agentApi.createRequests).toHaveLength(0);
     const start = page.getByRole('button', { name: 'Run kontrolliert starten', exact: true });
+    { const consent = page.locator('input[name="agentDataTransferConsent"]'); if (await consent.count()) await consent.check(); }
     await expect.poll(() => agentApi.preflightRequests.length).toBeGreaterThan(preflightCount);
     await expect(page.getByTestId('agent-preflight')).toContainText('Das aktive Profil erlaubt nur einen schreibgeschützten Workspace.');
     const blockedPreflightCount = agentApi.preflightRequests.length;
@@ -637,6 +648,7 @@ test.describe('Agent Center – offline browser contract', () => {
     await prompt.focus();
     await prompt.fill('Tastaturbedienung mit synthetischem Inhalt prüfen');
     const start = page.getByRole('button', { name: 'Run kontrolliert starten', exact: true });
+    { const consent = page.locator('input[name="agentDataTransferConsent"]'); if (await consent.count()) await consent.check(); }
     await expect(start).toBeEnabled();
     await expect.poll(() => agentApi.preflightRequests.length).toBe(1);
     await start.focus();

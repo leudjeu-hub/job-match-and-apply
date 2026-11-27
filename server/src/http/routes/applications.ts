@@ -31,6 +31,8 @@ import {
 } from '../app-support.js';
 import type { AppContext } from '../app-context.js';
 
+export const ERASE_WORKSPACE_CONFIRMATION = 'ALLE ARBEITSDATEN LÖSCHEN';
+
 export function registerApplicationRoutes(app: Express, ctx: AppContext): void {
   const {
     store, workspace, mailVault, applicationPipeline,
@@ -428,6 +430,30 @@ export function registerApplicationRoutes(app: Express, ctx: AppContext): void {
   app.post('/api/data/retention/run', asyncRoute(async (request, response) => {
     const policy = z.object({ enabled: z.boolean(), days: z.number().int().min(1).max(3650), confirmed: z.literal(true) }).parse(request.body);
     response.json(await applyRetention(workspace, policy, new Date()));
+  }));
+
+  /**
+   * Löscht alle Arbeitsdaten in einem Schritt (Art. 17 DSGVO): Suchläufe, Jobliste, Entscheidungen,
+   * Bewerbungsfälle samt Tracking und Revisionen, Wiedervorlagen, Suchpläne, Vergleichsnotizen und
+   * temporäre Arbeitsartefakte. Konfiguration, Identitäten, Mail-Tresor, Lebenslauf-Importe und
+   * Agentenläufe haben eigene, revisionsgebundene Löschwege und werden ausdrücklich als „retained“ gemeldet.
+   */
+  app.post('/api/data/erase-workspace', asyncRoute(async (request, response) => {
+    const { confirmation } = z.object({ confirmation: z.string() }).parse(request.body);
+    if (confirmation !== ERASE_WORKSPACE_CONFIRMATION) {
+      throw Object.assign(new Error(`Bestätigung muss exakt „${ERASE_WORKSPACE_CONFIRMATION}“ lauten.`), { statusCode: 409 });
+    }
+    const removed: Record<string, number | null> = {};
+    for (const scope of ['search_runs', 'job_inventory', 'job_decisions', 'application_cases', 'reminders', 'search_schedules', 'comparison_notes'] as const) {
+      removed[scope] = await workspace.clear(scope);
+    }
+    await rm(resolve(process.cwd(), '..', '.application-work'), { recursive: true, force: true });
+    removed['work_artifacts'] = null;
+    response.json({
+      erasedAt: new Date().toISOString(),
+      removed,
+      retained: ['configuration', 'identities', 'mail_vault', 'cv_imports', 'agent_runs', 'agent_artifacts', 'agent_keys', 'portal_sessions'],
+    });
   }));
 
   app.delete('/api/data/:scope', asyncRoute(async (request, response) => {

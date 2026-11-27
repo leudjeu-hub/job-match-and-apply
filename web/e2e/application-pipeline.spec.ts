@@ -5,6 +5,8 @@ import { expect, test } from './support/agent-api.fixture';
 async function openSection(page: Page, label: string): Promise<void> {
   await page.goto('/');
   const navigation = page.locator('nav[aria-label="Hauptnavigation"] button').filter({ hasText: label });
+  // Mobil liegt die Hauptnavigation hinter „Mehr“.
+  if (!(await navigation.isVisible())) await page.locator('nav.bottom-bar').getByRole('button', { name: 'Mehr', exact: true }).click();
   await expect(navigation).toBeVisible();
   await navigation.click();
 }
@@ -213,15 +215,16 @@ test.describe('Bewerbungspipeline – offline browser contract', () => {
 
     const center = page.getByTestId('agent-orchestration-center');
     await expect(center.locator('select[name="orchestrationWorkflow"]')).toHaveValue('employer-response-triage');
-    await expect(center.locator('select[name="orchestrationProvider"]')).toHaveValue('fake-interactive');
+    await expect(center.locator('select[name="orchestrationProvider"]')).toHaveValue('codex-exec');
     await expect(center.locator('select[name="orchestrationCase"]')).toHaveValue(application.id);
     await expect(center).toContainText(message.id);
     await expect(center).not.toContainText(message.text);
+    { const consent = page.locator('input[name="orchestrationDataTransferConsent"]'); if (await consent.count()) await consent.first().check(); }
     await center.getByRole('button', { name: 'Multi-Agent-Workflow starten', exact: true }).click();
 
     await expect.poll(() => agentApi.orchestrationCreateRequests.length).toBe(1);
     expect(agentApi.orchestrationCreateRequests[0]).toMatchObject({
-      workflowId: 'employer-response-triage', providerId: 'fake-interactive', runtimeTarget: 'windows',
+      workflowId: 'employer-response-triage', providerId: 'codex-exec', runtimeTarget: 'windows',
       applicationCaseId: application.id, mailId: message.id
     });
     const submitted = JSON.stringify(agentApi.orchestrationCreateRequests[0]);
@@ -259,7 +262,7 @@ test.describe('Bewerbungspipeline – offline browser contract', () => {
     const center = page.getByTestId('agent-orchestration-center');
     await expect(center).toContainText('application_coordinator');
     await expect(center).toContainText('quellen- und confidence-gebundene nächste Schritte');
-    await center.getByRole('button', { name: 'Proposal im Node-Run prüfen', exact: true }).click();
+    await center.getByRole('button', { name: 'Quell-Run prüfen', exact: true }).first().click();
     const artifacts = page.locator('.agent-artifact-list');
     await expect(artifacts).toContainText(artifact.kind);
     await artifacts.getByRole('button', { name: 'Inhalt bewusst anzeigen', exact: true }).click();

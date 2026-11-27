@@ -20,6 +20,24 @@ export class AgentCenterComponent {
   readonly agents = inject(AgentCenterStore);
   readonly app = inject(APP_HOST);
 
+  /** Sprungmarken: die lange Seite beginnt mit Verwaltung; die häufigsten Aufgaben sind so direkt erreichbar. */
+  readonly jumps = [
+    { id: 'agent-workspace', label: 'Lauf starten' },
+    { id: 'agent-orchestration', label: 'Multi-Agent-Workflows' },
+    { id: 'agent-approvals', label: 'Offene Entscheidungen' },
+    { id: 'agent-providers', label: 'Provider' },
+    { id: 'agent-ops', label: 'Queue & Recovery' },
+    { id: 'agent-setup', label: 'Einrichtung & API-Keys' },
+    { id: 'agent-config', label: 'Sicherheitsprofil' },
+  ];
+
+  jumpTo(id: string): void {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    target.focus({ preventScroll: true });
+  }
+
   @ViewChild('agentTimelineList') set agentTimelineList(value: ElementRef<HTMLOListElement> | undefined) {
     this.agents.agentTimelineList = value;
   }

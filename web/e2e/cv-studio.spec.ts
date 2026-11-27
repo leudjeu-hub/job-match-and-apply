@@ -5,6 +5,8 @@ import { expect, test } from './support/agent-api.fixture';
 async function openCvStudio(page: Page): Promise<void> {
   await page.goto('/');
   const navigation = page.locator('nav[aria-label="Hauptnavigation"] button').filter({ hasText: 'Lebenslauf' });
+  // Mobil liegt die Hauptnavigation hinter „Mehr“.
+  if (!(await navigation.isVisible())) await page.locator('nav.bottom-bar').getByRole('button', { name: 'Mehr', exact: true }).click();
   await expect(navigation).toBeVisible();
   await navigation.click();
   await expect(page.getByTestId('cv-import-step')).toBeVisible();
@@ -76,6 +78,7 @@ test.describe('Lebenslauf-Studio – vollständiger Offline-Vertrag', () => {
     const pipeline = page.getByTestId('cv-pipeline-step');
     await expect(pipeline).toContainText('kein manuelles Fortsetzen nötig');
 
+    { const consent = page.locator('input[name="orchestrationDataTransferConsent"]'); if (await consent.count()) await consent.first().check(); }
     await pipeline.getByTestId('cv-agent-start').click();
     await expect.poll(() => agentApi.orchestrationCreateRequests.length).toBe(1);
     expect(agentApi.orchestrationCreateRequests[0]).toMatchObject({

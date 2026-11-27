@@ -73,6 +73,9 @@ export class ApiService {
   createSchedule(profile: SearchProfile): Observable<SearchSchedule> {
     return this.http.post<SearchSchedule>('/api/search-schedules', { name: `${profile.name} – lokal`, enabled: false, profile, intervalMinutes: 1440, quietHours: { start: 22, end: 7, timeZone: 'Europe/Berlin' } });
   }
+  eraseWorkspace(confirmation: string): Observable<{ erasedAt: string; removed: Record<string, number | null>; retained: string[] }> {
+    return this.http.post<{ erasedAt: string; removed: Record<string, number | null>; retained: string[] }>('/api/data/erase-workspace', { confirmation });
+  }
   runRetention(days: number): Observable<Record<string, unknown>> { return this.http.post<Record<string, unknown>>('/api/data/retention/run', { enabled: true, days, confirmed: true }); }
   logout(sourceId: string): Observable<{ status: string; note?: string }> {
     return this.http.delete<{ status: string; note?: string }>(`/api/sources/${sourceId}/session`);

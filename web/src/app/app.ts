@@ -149,6 +149,21 @@ export class App implements OnInit, OnDestroy {
 
   toggleMobileMenu(open = !this.mobileMenuOpen): void { this.mobileMenuOpen = open; }
 
+  /** Sprungmarken für die lange Profilseite. */
+  readonly profileJumps = [
+    { id: 'profile-identities', label: 'Identitäten' },
+    { id: 'profile-cv', label: 'Erkannter Lebenslauf' },
+    { id: 'profile-setup', label: 'Kandidatenprofil' },
+    { id: 'profile-style', label: 'Schreibstil' },
+    { id: 'profile-claims', label: 'Belegte Claims' },
+  ];
+  jumpTo(id: string): void {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    target.focus({ preventScroll: true });
+  }
+
   ngOnInit(): void {
     this.agents.configureAgentMotionPreference();
     this.bindSectionToRouter();
@@ -1225,7 +1240,43 @@ export class App implements OnInit, OnDestroy {
       error: (error) => this.fail(error)
     });
   }
-  previewPortableExport(): void { this.api.portableExport().subscribe({ next: (value) => { this.exportPreview = value; this.notice = 'Portabler Export ohne Identitäten erstellt.'; this.refreshView(); }, error: (error) => this.fail(error) }); }
+  previewPortableExport(): void {
+    this.api.portableExport().subscribe({
+      next: (value) => {
+        this.exportPreview = value;
+        // Datenübertragbarkeit (Art. 20 DSGVO): Export direkt als JSON-Datei anbieten.
+        const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url; link.download = `jobmatch-export-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+        this.notice = 'Export ohne Identitäten wurde als JSON-Datei heruntergeladen.';
+        this.refreshView();
+      },
+      error: (error) => this.fail(error)
+    });
+  }
+
+  /** Muss exakt so eingegeben werden; identisch mit ERASE_WORKSPACE_CONFIRMATION im Server. */
+  readonly eraseConfirmationPhrase = 'ALLE ARBEITSDATEN LÖSCHEN';
+  eraseConfirmationInput = '';
+  eraseBusy = false;
+  eraseWorkspace(): void {
+    if (this.eraseConfirmationInput !== this.eraseConfirmationPhrase || this.eraseBusy) return;
+    this.eraseBusy = true;
+    this.api.eraseWorkspace(this.eraseConfirmationInput).subscribe({
+      next: (result) => {
+        this.eraseBusy = false; this.eraseConfirmationInput = '';
+        const total = Object.values(result.removed).reduce<number>((sum, value) => sum + (value ?? 0), 0);
+        this.notice = `Alle Arbeitsdaten wurden gelöscht (${total} Einträge).`;
+        this.matches = []; this.jobInventory = []; this.applicationCases = []; this.jobDecisions = []; this.searchRunSummaries = [];
+        this.loadOperations();
+        this.refreshView();
+      },
+      error: (error) => { this.eraseBusy = false; this.fail(error); }
+    });
+  }
   applyRetentionPolicy(): void { this.api.runRetention(this.retentionDays).subscribe({ next: () => { this.notice = 'Bestätigte Aufbewahrungsregel wurde lokal ausgeführt.'; this.loadOperations(); }, error: (error) => this.fail(error) }); }
   loadProfileSetup(): void {
     this.api.applicationPipelineSetup().subscribe({

@@ -266,6 +266,22 @@ describe('API', () => {
     expect(history.body.map((event: { to: string }) => event.to)).toEqual(['selected', 'analysis', 'draft', 'review']);
   });
 
+  it('erases all workspace data in one confirmed step and reports what is retained', async () => {
+    const workspace = new MemoryWorkspaceStore();
+    const app = createApp(new MemoryConfigStore(), new MemoryAuditLogger(), workspace);
+    await request(app).post('/api/jobs/search').send({}).expect(200);
+    expect((await workspace.exportSnapshot()).searchRuns.length).toBeGreaterThan(0);
+    await request(app).post('/api/data/erase-workspace').send({ confirmation: 'löschen' }).expect(409);
+    expect((await workspace.exportSnapshot()).searchRuns.length).toBeGreaterThan(0);
+    const erased = await request(app).post('/api/data/erase-workspace').send({ confirmation: 'ALLE ARBEITSDATEN LÖSCHEN' }).expect(200);
+    expect(erased.body.removed.search_runs).toBeGreaterThan(0);
+    expect(erased.body.retained).toContain('identities');
+    const snapshot = await workspace.exportSnapshot();
+    expect(snapshot.searchRuns).toEqual([]);
+    expect(snapshot.jobInventory).toEqual([]);
+    expect(snapshot.applicationCases).toEqual([]);
+  });
+
   it('exports data without identities by default and deletes only confirmed scope', async () => {
     const workspace = new MemoryWorkspaceStore();
     const app = createApp(new MemoryConfigStore(), new MemoryAuditLogger(), workspace);
