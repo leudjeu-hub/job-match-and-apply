@@ -616,14 +616,21 @@
       @if (section === 'operations') {
         <section class="page-intro"><div><span class="kicker">LOKAL & TRANSPARENT</span><h2>Daten und Betrieb</h2><p>Gespeicherte Daten, deaktivierte Suchpläne, Export und Aufbewahrung bleiben vollständig unter deiner Kontrolle.</p></div><button class="secondary" type="button" (click)="loadOperations()">Status aktualisieren</button></section>
         <section class="page-grid two-column">
-          <article class="panel"><div class="panel-head"><div><span class="kicker">DATENINVENTAR</span><h3>Lokale Speicherorte</h3></div><button class="secondary compact" type="button" (click)="previewPortableExport()">Export ohne Identitäten</button></div>
+          <article class="panel"><div class="panel-head"><div><span class="kicker">DATENINVENTAR</span><h3>Lokale Speicherorte</h3></div><button class="secondary compact" type="button" (click)="previewPortableExport()">Export herunterladen (ohne Identitäten)</button></div>
             @for (store of dataInventory?.stores ?? []; track store.id) { <div class="summary-row"><span>◇</span><div><strong>{{ store.purpose }}</strong><small>{{ store.location }} · {{ store.records ?? 'extern/temporär' }} Einträge</small></div></div> }
-            @if (exportPreview) { <div class="info-box"><strong>Export erstellt</strong><p>Personenbezogene Identitäten wurden ausgeschlossen. Die Vorschau bleibt nur im Arbeitsspeicher dieser Seite.</p></div> }
+            @if (exportPreview) { <div class="info-box"><strong>Export heruntergeladen</strong><p>Personenbezogene Identitäten wurden ausgeschlossen. Die Datei liegt in deinem Download-Ordner.</p></div> }
           </article>
           <article class="panel"><div class="panel-head"><div><span class="kicker">SUCHPLÄNE</span><h3>Standardmäßig deaktiviert</h3></div><button class="secondary compact" type="button" (click)="createDisabledSchedule()">Deaktivierten Plan anlegen</button></div>
             @for (schedule of schedules; track schedule.id) { <div class="summary-row"><span>{{ schedule.enabled ? '●' : '○' }}</span><div><strong>{{ schedule.name }}</strong><small>{{ schedule.enabled ? 'aktiv' : 'deaktiviert' }} · alle {{ schedule.intervalMinutes }} Minuten</small></div><button class="danger-button compact" type="button" (click)="deleteSchedule(schedule)">Löschen</button></div> }
             <div class="warning-box"><strong>Aufbewahrung ausführen</strong><p>Entfernt alte Suchläufe, abgeschlossene Fälle, erledigte Reminder und alte Vergleichsnotizen. Aktive Fälle und gemerkte Stellen bleiben erhalten.</p><label>Tage<input type="number" min="1" max="3650" [(ngModel)]="retentionDays"></label><button class="secondary" type="button" (click)="applyRetentionPolicy()">Bewusst anwenden</button></div>
           </article>
+        </section>
+        <section class="panel erase-panel" aria-labelledby="erase-title" data-testid="erase-workspace">
+          <span class="kicker">GEFAHRENZONE</span><h3 id="erase-title">Alle Arbeitsdaten löschen</h3>
+          <p class="description">Entfernt in einem Schritt dauerhaft: Suchläufe, die zentrale Jobliste, Merk-/Ausblendentscheidungen, Bewerbungsfälle mit Verlauf und Dokumentrevisionen, Wiedervorlagen, Suchpläne, Vergleichsnotizen und temporäre Arbeitsdateien. Das lässt sich nicht rückgängig machen – lade vorher bei Bedarf den Export herunter.</p>
+          <p class="description">Bleiben erhalten (eigene Löschwege): Konfiguration und Identitäten, Mail-Tresor, Lebenslauf-Importe, Agentenläufe und Portal-Sitzungen.</p>
+          <label>Zur Bestätigung „{{ eraseConfirmationPhrase }}“ eingeben<input name="eraseConfirmation" autocomplete="off" [(ngModel)]="eraseConfirmationInput"></label>
+          <button class="danger-button" type="button" (click)="eraseWorkspace()" [disabled]="eraseBusy || eraseConfirmationInput !== eraseConfirmationPhrase">{{ eraseBusy ? 'Wird gelöscht …' : 'Alle Arbeitsdaten endgültig löschen' }}</button>
         </section>
       }
     }

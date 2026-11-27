@@ -83,3 +83,8 @@
 .mail-setup summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 6px; }
 .mail-setup .form-grid { margin: 12px 0 16px; }
 .company-grid + .crm-top { margin-top: 24px; }
+
+/* Daten & Betrieb: Gefahrenzone zum Löschen aller Arbeitsdaten. */
+.erase-panel { margin-top: 24px; border-color: color-mix(in srgb, #b42318 35%, var(--color-border)); }
+.erase-panel .kicker { color: #b42318; }
+.erase-panel label { display: grid; gap: 6px; max-width: 420px; margin: 12px 0; font-weight: 600; font-size: var(--fs-3); }
