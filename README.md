@@ -44,6 +44,13 @@ npm.cmd run dev
 Danach: <http://localhost:4201>. Port 4200 bleibt für andere lokale Anwendungen frei. Der Demo-Modus benötigt weder echte Accounts noch externe
 Portalzugriffe.
 
+Weitere Startwege:
+
+- **Mac:** `start-mac.command` im Finder doppelklicken – prüft Voraussetzungen, installiert und öffnet den Browser.
+- **Docker (vollständiger Stack inkl. Python und OCR):** `docker compose up -d --build` oder `start-docker.command`.
+
+Bausteine, Versionen, Ports, Datenablage und Grenzen je Startweg: [STACK.md](STACK.md).
+
 ## OpenRouter in der Oberfläche einrichten
 
 Unter **Agenten → Provider-Einrichtung → API-Keys pro Provider** den Provider

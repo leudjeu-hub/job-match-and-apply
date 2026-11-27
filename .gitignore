@@ -12,3 +12,6 @@ dist/
 %SystemDrive%/
 uebergabe/
 .opencode/
+
+# macOS
+.DS_Store
