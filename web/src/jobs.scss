@@ -92,3 +92,8 @@
 /* Agent Center: Einwilligung pro Übermittlung an externe Provider. */
 .data-transfer-consent { align-items: flex-start; margin: 12px 0; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface-muted); font-size: var(--fs-2); line-height: 1.5; }
 .data-transfer-consent input { margin-top: 3px; }
+
+/* Mobil: Kennzahlen von „Meine Jobs“ als 2×2-Raster statt 3 + 1. */
+@media (max-width: 760px) {
+  .jobs-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
